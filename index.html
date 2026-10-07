@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Earth Migration Project — Humanity's Last Journey</title>
+<meta name="description" content="A cinematic, interactive Three.js experience: planetary engines, a space elevator and a deep-space civilisation pushing Earth out of the Solar System.">
+<meta name="theme-color" content="#02040a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body class="cinematic">
+<canvas id="scene" tabindex="0" aria-label="Interactive 3D scene of Earth with planetary engines, a space elevator and orbital stations"></canvas>
+<div class="bars" aria-hidden="true"></div>
+
+<div id="loader" role="status" aria-live="polite">
+  <div class="ld-inner">
+    <div class="ld-kicker">UNITED EARTH GOVERNMENT · 2075</div>
+    <div class="ld-title">THE EARTH MIGRATION PROJECT</div>
+    <div class="ld-sub">Humanity's Last Journey</div>
+    <div class="ld-bar"><i id="ld-fill"></i></div>
+    <div class="ld-status" id="ld-status">ESTABLISHING UPLINK…</div>
+  </div>
+</div>
+
+<div id="start" class="screen">
+  <div class="sc-inner">
+    <div class="sc-kicker">United Earth Government · Planetary Propulsion Command</div>
+    <h1 class="sc-title">THE EARTH MIGRATION PROJECT</h1>
+    <div class="sc-sub">Humanity's Last Journey</div>
+    <div class="sc-actions">
+      <button class="cta" id="btn-watch" type="button"><span class="cta-ico">▶</span><span>Watch the journey<small>A 1-minute film · sound on</small></span></button>
+      <button class="cta ghost" id="btn-explore" type="button"><span>Explore freely<small>Orbit, fly and inspect every structure</small></span></button>
+    </div>
+  </div>
+</div>
+<div id="fade"></div>
+<div id="story" aria-live="polite">
+  <div id="st-card"><div class="stc-num" id="stc-num"></div><div class="stc-title" id="stc-title"></div><div class="stc-year" id="stc-year"></div></div>
+  <div id="st-title"><div class="stt-k">4.24 light-years · 2,500 years</div><div class="stt-t">THE EARTH MIGRATION PROJECT</div><div class="stt-s">A hundred generations · One home</div></div>
+  <div id="st-sub"></div>
+  <div id="st-bar">
+    <button class="sb" id="sb-prev" type="button" title="Previous chapter (←)">◀◀</button>
+    <button class="sb" id="sb-play" type="button" title="Play / pause (Space)">❚❚ PAUSE</button>
+    <button class="sb" id="sb-next" type="button" title="Next chapter (→)">▶▶</button>
+    <div id="sb-track" title="Seek"><div id="sb-fill"></div><div id="sb-ticks"></div></div>
+    <span id="sb-time">0:00 / 0:00</span>
+    <button class="sb" id="sb-sound" type="button" title="Sound (M)">SOUND ON</button>
+    <button class="sb" id="sb-exit" type="button" title="Exit to explore (Esc)">✕ EXIT</button>
+  </div>
+</div>
+<div id="end" class="screen">
+  <div class="sc-inner">
+    <div class="sc-kicker">Transmission ends · The journey continues</div>
+    <h1 class="sc-title">HUMANITY'S LAST JOURNEY</h1>
+    <div class="sc-actions">
+      <button class="cta" id="btn-again" type="button"><span class="cta-ico">↺</span><span>Watch again</span></button>
+      <button class="cta ghost" id="btn-explore2" type="button"><span>Explore freely<small>Take the controls</small></span></button>
+    </div>
+  </div>
+</div>
+<div id="caption" aria-live="polite"><div class="c-kicker" id="cap-k"></div><div class="c-title" id="cap-t"></div><div class="c-sub" id="cap-s"></div></div>
+<div id="crosshair" aria-hidden="true"></div>
+<div id="tooltip"></div>
+<div id="markers" aria-hidden="true"></div>
+<div id="fp-touch"><button class="btn" id="fp-fwd" aria-label="Thrust forward">▲</button><button class="btn" id="fp-back" aria-label="Thrust backward">▼</button></div>
+
+<div id="hud">
+  <div class="panel" id="title-block">
+    <div class="t-kicker">UEG · PLANETARY PROPULSION COMMAND</div>
+    <div class="t-title">THE EARTH MIGRATION PROJECT</div>
+    <div class="t-sub">Humanity's Last Journey</div>
+    <div class="t-clock"><span>MISSION <b id="h-day">T+0000 D</b></span><span>UTC <b id="h-utc">00:00:00</b></span></div>
+  </div>
+
+  <div id="hud-toggle-wrap">
+    <button class="btn" id="btn-hud" title="Hide or show the HUD (H)"><kbd>H</kbd>HUD</button>
+    <button class="btn" id="btn-fx" title="Toggle heavy post-processing (G)"><kbd>G</kbd>FX HIGH</button>
+  </div>
+
+  <section class="panel" id="orbit-panel" aria-label="Current orbital position">
+    <div class="p-head"><span>Orbital Position</span><span class="dot"></span></div>
+    <div class="rows">
+      <div class="row"><span>Heliocentric dist.</span><span id="h-au">1.0000 AU</span></div>
+      <div class="row"><span>Velocity</span><span id="h-vel">0.00 km/s</span></div>
+      <div class="row"><span>Phase</span><span id="h-phase">ESCAPE BURN</span></div>
+      <div class="row"><span>Ecliptic lon / lat</span><span id="h-ecl">0.00° / 0.00°</span></div>
+      <div class="row"><span>Earth rotation</span><span id="h-rot">0.0°</span></div>
+    </div>
+    <svg id="orbit-svg" viewBox="0 0 290 118" aria-hidden="true">
+      <defs><radialGradient id="sunG"><stop offset="0" stop-color="#fff6d8"/><stop offset=".4" stop-color="#ffc46b"/><stop offset="1" stop-color="#ff8a3a" stop-opacity="0"/></radialGradient></defs>
+      <circle cx="70" cy="59" r="16" fill="url(#sunG)"/>
+      <circle cx="70" cy="59" r="30" fill="none" stroke="rgba(127,220,255,.25)" stroke-dasharray="2 4"/>
+      <circle cx="70" cy="59" r="96" fill="none" stroke="rgba(255,180,106,.25)" stroke-dasharray="2 4"/>
+      <path id="o-spiral" fill="none" stroke="rgba(127,220,255,.75)" stroke-width="1.2"/>
+      <circle id="o-jup" r="4.5" fill="#d9a46c"/>
+      <circle id="o-earth" r="3.6" fill="#7fdcff" style="filter:drop-shadow(0 0 4px #7fdcff)"/>
+      <text x="200" y="20" fill="rgba(220,239,255,.55)" font-family="Rajdhani" font-size="10" letter-spacing="1.5">TRAJECTORY · JUPITER ASSIST</text>
+    </svg>
+  </section>
+
+  <section class="panel" id="engine-panel" aria-label="Engine power status">
+    <div class="p-head"><span>Planetary Engines</span><b id="h-eng-state">THRUST</b></div>
+    <div style="margin-top:12px" class="big"><span id="h-power">0.0</span><small>% OUTPUT</small></div>
+    <div class="meter" id="h-meter"></div>
+    <div class="rows">
+      <div class="row"><span>Active units</span><span id="h-active">0 / 0</span></div>
+      <div class="row"><span>Total thrust</span><span id="h-thrust">0</span></div>
+      <div class="row"><span>Plasma core</span><span id="h-core">0 K</span></div>
+      <div class="row"><span>Fuel (heavy elements)</span><span id="h-fuel">0%</span></div>
+    </div>
+    <div class="sectors" id="h-sectors"></div>
+  </section>
+
+  <section class="panel" id="elevator-panel" aria-label="Space elevator status">
+    <div class="p-head"><span>Space Elevator</span><span class="dot"></span></div>
+    <div class="rows">
+      <div class="row"><span>Anchor</span><span>EQUATORIAL · 0.0°N 22.0°E</span></div>
+      <div class="row"><span>Apex station</span><span id="h-apex">GEOSYNC LOCKED</span></div>
+      <div class="row"><span>Climbers ascending</span><span id="h-up">0</span></div>
+      <div class="row"><span>Climbers descending</span><span id="h-down">0</span></div>
+      <div class="row"><span>Cable tension</span><span id="h-tension">0%</span></div>
+      <div class="row"><span>Next departure</span><span id="h-next">00:00</span></div>
+      <div class="row"><span>Orbital traffic</span><span id="h-traffic">0 craft</span></div>
+    </div>
+  </section>
+
+  <section class="panel" id="system-panel" aria-label="Planetary system information">
+    <div class="p-head"><span>Planetary System</span><span class="dot amber"></span></div>
+    <div class="rows">
+      <div class="row"><span>Destination</span><span>PROXIMA CEN · 4.24 LY</span></div>
+      <div class="row"><span>Jupiter encounter</span><span id="h-jup">0 D</span></div>
+      <div class="row"><span>Solar flux</span><span id="h-flux">100%</span></div>
+      <div class="row"><span>Lunar escort</span><span>BOUND · 0.97</span></div>
+      <div class="row"><span>Voyage complete</span><span id="h-prog">0.000%</span></div>
+    </div>
+  </section>
+
+  <section class="panel" id="cam-panel" aria-label="Camera telemetry">
+    <div class="p-head"><span>Observer</span><b id="h-mode">CINEMATIC</b></div>
+    <div class="rows">
+      <div class="row"><span>Focus</span><span id="h-focus">EARTH</span></div>
+      <div class="row"><span>Altitude</span><span id="h-alt">0 km</span></div>
+      <div class="row"><span>Range to focus</span><span id="h-range">0 km</span></div>
+      <div class="row"><span>Render</span><span id="h-fps">— fps</span></div>
+    </div>
+  </section>
+
+  <nav id="dock" aria-label="Camera controls">
+    <div id="hint">Drag to orbit · Scroll to zoom · Click a structure to fly there · F first-person · J watch the journey</div>
+    <div class="marks" id="marks"></div>
+    <div class="modes">
+      <button class="btn" data-mode="cinematic"><kbd>C</kbd>Cinematic</button>
+      <button class="btn" data-mode="explore"><kbd>O</kbd>Explore</button>
+      <button class="btn" data-mode="fp"><kbd>F</kbd>First person</button>
+      <button class="btn" id="btn-journey" type="button" title="Watch the whole journey as a film"><kbd>J</kbd>▶ Journey</button>
+    </div>
+  </nav>
+</div>
+
+<script src="js/boot.js"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three/build/three.module.js",
+  "three/addons/": "./vendor/three/examples/jsm/"
+} }
+</script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

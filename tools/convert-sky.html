@@ -1,0 +1,44 @@
+<!doctype html><meta charset="utf-8"><body>
+<script type="importmap">{ "imports": { "three": "/vendor/three/build/three.module.js", "three/addons/": "/vendor/three/examples/jsm/" } }</script>
+<script type="module">
+import * as THREE from 'three';
+import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
+const load = url => new Promise((res, rej) => { const l = new EXRLoader(); l.setDataType(THREE.FloatType); l.load(url, res, undefined, rej); });
+window.convMilky = async () => {
+  const t = await load('/sky/milkyway_2020_4k.exr'), { width: W, height: H, data } = t.image, C = data.length / (W * H);
+  const lum = new Float32Array(W * H); for (let i = 0; i < W * H; i++) lum[i] = data[i * C] * 0.2126 + data[i * C + 1] * 0.7152 + data[i * C + 2] * 0.0722;
+  const sorted = Float32Array.from(lum).sort(), white = sorted[Math.floor(sorted.length * 0.9995)];
+  const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'), img = x.createImageData(W, H);
+  for (let y = 0; y < H; y++) for (let i = 0; i < W; i++) {
+    const s = ((H - 1 - y) * W + i) * C, d = (y * W + i) * 4;   // EXR rows are bottom-up
+    for (let k = 0; k < 3; k++) img.data[d + k] = Math.round(255 * Math.pow(Math.min(Math.max(data[s + k] / white, 0), 1), 1 / 2.2));
+    img.data[d + 3] = 255;
+  }
+  x.putImageData(img, 0, 0);
+  return { white, url: c.toDataURL('image/jpeg', 0.9) };
+};
+window.convStars = async (maxN) => {
+  const t = await load('/sky/hiptyc_2020_8k.exr'), { width: W, height: H, data } = t.image, C = data.length / (W * H);
+  const L = i => data[i * C] + data[i * C + 1] + data[i * C + 2];
+  const cand = [];
+  for (let y = 2; y < H - 2; y++) for (let x = 0; x < W; x++) {
+    const i = y * W + x, v = L(i); if (v < 0.002) continue;
+    let peak = true;
+    for (let dy = -1; dy <= 1 && peak; dy++) for (let dx = -1; dx <= 1; dx++) { if (!dx && !dy) continue; const j = (y + dy) * W + (x + dx + W) % W; if (L(j) > v || (L(j) === v && j < i)) { peak = false; break; } }
+    if (!peak) continue;
+    let r = 0, g = 0, b = 0;
+    for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const j = (y + dy) * W + (x + dx + W) % W; r += data[j * C]; g += data[j * C + 1]; b += data[j * C + 2]; }
+    cand.push([r + g + b, x, y, r, g, b]);
+  }
+  cand.sort((a, b) => b[0] - a[0]);
+  const n = Math.min(maxN, cand.length), out = new Float32Array(n * 6);
+  for (let k = 0; k < n; k++) {
+    const [f, x, y, r, g, b] = cand[k];
+    const lon = ((x + 0.5) / W) * 2 * Math.PI, lat = Math.PI / 2 - ((H - 1 - y + 0.5) / H) * Math.PI;   // y flipped (bottom-up rows)
+    out.set([Math.cos(lat) * Math.cos(lon), Math.sin(lat), -Math.cos(lat) * Math.sin(lon), r, g, b], k * 6);
+  }
+  const bytes = new Uint8Array(out.buffer); let s = ''; for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return { found: cand.length, kept: n, brightest: cand[0][0], faintest: cand[n - 1][0], b64: btoa(s) };
+};
+window.ready = true;
+</script>

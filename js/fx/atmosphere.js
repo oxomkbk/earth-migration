@@ -8,13 +8,13 @@
 // depths (Rayleigh ≈ 0.05 / 0.11 / 0.27 in R/G/B, Mie ≈ 0.03), so colours stay physically right.
 import * as THREE from 'three';
 
-export function createAtmosphere({ R = 100, thickness = 6, uSun, uLight, uPower, steps = 14, lightSteps = 5 }) {
+export function createAtmosphere({ R = 100, thickness = 6, uSun, uLight, uPower, uEng, uIgnite, uHeroW, steps = 14, lightSteps = 5 }) {
   const HR = 0.55, HM = 0.16;
   const betaR = new THREE.Vector3(0.0464, 0.108, 0.265).divideScalar(HR);
   const betaM = 0.03 / HM;
   const mat = new THREE.ShaderMaterial({
     uniforms: {
-      uSun, uLight, uPower: uPower || { value: 0 },
+      uSun, uLight, uPower: uPower || { value: 0 }, uEng: uEng || { value: new THREE.Vector3(0, 0, -1) }, uIgnite: uIgnite || { value: 10 }, uHeroW: uHeroW || { value: new THREE.Vector3(0, 1, 0) },
       uR: { value: R }, uRA: { value: R + thickness }, uHR: { value: HR }, uHM: { value: HM },
       uBetaR: { value: betaR }, uBetaM: { value: betaM }, uSunI: { value: 16 }, uG: { value: 0.76 },
     },
@@ -22,7 +22,7 @@ export function createAtmosphere({ R = 100, thickness = 6, uSun, uLight, uPower,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.FrontSide,
     vertexShader: `varying vec3 vPw; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vPw = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
     fragmentShader: /* glsl */`
-      uniform vec3 uSun, uBetaR; uniform float uLight, uPower, uR, uRA, uHR, uHM, uBetaM, uSunI, uG;
+      uniform vec3 uSun, uBetaR, uEng, uHeroW; uniform float uLight, uPower, uR, uRA, uHR, uHM, uBetaM, uSunI, uG, uIgnite;
       varying vec3 vPw;
       vec2 sphere(vec3 ro, vec3 rd, float r){ float b = dot(ro, rd), c = dot(ro, ro) - r * r, d = b * b - c; if (d < 0.0) return vec2(1e9, -1e9); d = sqrt(d); return vec2(-b - d, -b + d); }
       void main(){
@@ -53,7 +53,14 @@ export function createAtmosphere({ R = 100, thickness = 6, uSun, uLight, uPower,
         float phM = 3.0 / (8.0 * 3.14159) * ((1.0 - g * g) * (1.0 + mu * mu)) / ((2.0 + g * g) * pow(1.0 + g * g - 2.0 * g * mu, 1.5));
         vec3 col = uSunI * uLight * (sumR * uBetaR * phR + sumM * uBetaM * phM);
         // the night limb glows faintly blue with the light of the planetary engines
-        col += vec3(0.05, 0.16, 0.55) * uPower * 0.012 * max(odR - 2.0, 0.0) * (1.0 - smoothstep(-0.2, 0.1, dot(normalize(ro + rd * t1), L)));
+        // the air over the burning hemisphere glows blue with the light of ten thousand engines (strongest on the
+        // night side, a faint tint in daylight) — the planet's signature in every stage, sunlit or not
+        vec3 pe = normalize(ro + rd * t1);
+        float eng = smoothstep(-0.15, 0.55, dot(pe, normalize(uEng))) * (1.0 - 0.75 * smoothstep(-0.2, 0.15, dot(pe, L) * step(0.05, uLight)));
+        float ia = acos(clamp(dot(pe, uHeroW), -1.0, 1.0));
+        eng *= 1.0 - smoothstep(uIgnite - 0.25, uIgnite + 0.02, ia);   // the air lights up only behind the ignition front
+        float wq = (ia - uIgnite) / 0.07; eng += exp(-wq * wq) * 1.1 * step(uIgnite, 3.3) * step(0.01, uIgnite);   // and the front itself is a bright wave racing through the air
+        col += vec3(0.08, 0.22, 0.7) * uPower * 0.02 * min(odR, 6.0) * eng;
         gl_FragColor = vec4(col, 1.0);
       }`,
   });

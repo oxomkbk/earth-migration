@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Beyond the Wandering Earth</title>
+<meta name="description" content="A continuous, cinematic Three.js journey from the planetary engines of the Wandering Earth, out through the Solar System and interstellar space, to the whole Milky Way.">
+<meta name="theme-color" content="#02040a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/beyond.css">
+</head>
+<body class="cinematic">
+<canvas id="gl" tabindex="0" aria-label="Cinematic 3D journey from Earth's planetary engines to the Milky Way"></canvas>
+<div class="bars" aria-hidden="true"></div>
+
+<div id="loader" role="status" aria-live="polite">
+  <div class="ld-inner">
+    <div class="ld-kicker">UNITED EARTH GOVERNMENT · NAVIGATION PLATFORM</div>
+    <div class="ld-title">BEYOND THE WANDERING EARTH</div>
+    <div class="ld-bar"><i id="ld-fill"></i></div>
+    <div class="ld-status" id="ld-status">ESTABLISHING UPLINK…</div>
+  </div>
+</div>
+
+<div id="start" class="screen">
+  <div class="sc-inner">
+    <div class="sc-kicker">Part II of The Earth Migration Project</div>
+    <h1 class="sc-title">BEYOND THE<br>WANDERING EARTH</h1>
+    <div class="sc-sub">Humanity’s Journey from a Dying Sun to the Galactic Sea</div>
+    <div class="sc-actions">
+      <button class="cta" id="b-begin" type="button"><span class="cta-ico">▶</span><span>Begin the voyage<small>Cinematic autoplay · 2½ minutes · sound on</small></span></button>
+      <button class="cta ghost" id="b-explore" type="button"><span>Free camera<small>Fly from the engines to the galaxy</small></span></button>
+    </div>
+    <div class="sc-hints"><span><kbd>Scroll</kbd> travel through time</span><span><kbd>Drag</kbd> look around</span><span><kbd>Click</kbd> a marker to focus</span><span><kbd>F</kbd> free camera</span></div>
+    <a class="sc-back" href="index.html">← Part I · The Earth Migration Project</a>
+  </div>
+  <div class="sc-frame" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <div class="sc-tele" aria-hidden="true"><span><b class="dot"></b>UEG NAVIGATION PLATFORM</span><span>SOL-3 · 1.000 AU</span><span>YEAR 2078</span><span>ENGINES <b>0 / 10,000</b></span><span class="sc-wait">STATUS · AWAITING IGNITION</span></div>
+</div>
+
+<div id="card" aria-live="polite"><div class="cd-n" id="cd-n"></div><div class="cd-t" id="cd-t"></div><div class="cd-k" id="cd-k"></div></div>
+<div id="caption" aria-live="polite"></div>
+<div id="count" aria-hidden="true"><svg class="ct-ring" viewBox="0 0 200 200"><circle class="ct-track" cx="100" cy="100" r="92"/><circle class="ct-arc" cx="100" cy="100" r="92"/></svg><div class="ct-k">GLOBAL IGNITION SEQUENCE</div><div class="ct-n" id="ct-n"></div><div class="ct-s">10,000 ENGINES · TRAILING HEMISPHERE · THRUST 150 BILLION TONNES</div></div>
+<div id="hint"></div>
+
+<div id="hud">
+  <div id="brand"><div class="br-t">BEYOND THE WANDERING EARTH</div><div class="br-s">Humanity’s Journey from a Dying Sun to the Galactic Sea</div></div>
+  <div id="data" class="glass">
+    <div class="g-head"><span class="dot"></span>NAVIGATION TELEMETRY</div>
+    <div class="g-row"><span>ENGINE STATUS</span><b id="d-engine">—</b></div>
+    <div class="g-meter"><i id="d-engine-bar"></i></div>
+    <div class="g-row"><span>VELOCITY</span><b id="d-speed">—</b></div>
+    <div class="g-row"><span>DISTANCE FROM SOL</span><b id="d-dist">—</b></div>
+    <div class="g-row"><span>REGION</span><b id="d-region">—</b></div>
+    <div class="g-row"><span>GALACTIC COORD.</span><b id="d-coord">—</b></div>
+    <div class="g-row"><span>MISSION YEAR</span><b id="d-year">—</b></div>
+    <div class="g-row"><span>FIELD OF VIEW</span><b id="d-fov">—</b></div>
+  </div>
+  <div id="hotspots"></div>
+  <div id="info" class="glass"></div>
+  <div id="modes" class="glass" role="toolbar" aria-label="Mode">
+    <button class="mb on" id="m-film" type="button" title="Cinematic film (Space to play)"><i>▶</i>FILM</button>
+    <button class="mb" id="m-explore" type="button" title="Explore with a free camera (F)"><i>✥</i>EXPLORE</button>
+    <span class="sep"></span>
+    <button class="ib" id="b-sound" type="button" title="Sound (M)">♪</button>
+    <button class="ib" id="b-hud" type="button" title="Hide dashboards (H)">◐</button>
+    <button class="ib" id="b-fs" type="button" title="Full screen">⛶</button>
+  </div>
+  <aside id="dest" class="glass" aria-label="Destinations">
+    <div class="g-head"><span class="dot"></span>DESTINATIONS</div>
+    <div id="dest-list"></div>
+  </aside>
+  <div id="ladder" aria-hidden="true"><div class="ld-track"></div><div id="ld-marks"></div><div id="ld-cursor"><b id="ld-val">—</b></div></div>
+  <div id="dock" class="glass">
+    <button class="db" id="b-play" type="button" title="Play / pause (Space)">▶</button>
+    <div id="segs"></div>
+    <span id="time">0:00</span>
+  </div>
+  <div id="xdock" class="glass">
+    <div class="x-row"><span class="x-l">VOYAGE</span><input id="voyage" type="range" min="0" max="146" step="0.1" value="0" aria-label="Voyage time"><b id="voyage-y">2078</b></div>
+    <div class="x-row x-orb"><span class="x-l">ORBITS</span><span class="seg3"><button type="button" data-v="0" class="on">REAL TIME</button><button type="button" data-v="0.04">1 YR / 25 s</button><button type="button" data-v="0.35">1 YR / 3 s</button><button type="button" data-v="3">TIME-LAPSE</button></span></div>
+    <div id="ruler" title="Click to zoom to that scale"><div class="r-track"></div><div id="r-marks"></div><div id="r-cursor"></div></div>
+    <div class="x-hint">Drag to orbit · scroll to zoom from 100 km to 100,000 light-years · click a marker or a destination to fly there</div>
+  </div>
+</div>
+
+<div id="end" class="screen">
+  <div class="sc-inner">
+    <div class="sc-kicker">Transmission ends · The journey continues</div>
+    <h1 class="sc-title">BEYOND THE<br>WANDERING EARTH</h1>
+    <div class="sc-sub">Humanity’s Journey from a Dying Sun to the Galactic Sea</div>
+    <div class="sc-actions">
+      <button class="cta" id="b-again" type="button"><span class="cta-ico">↺</span><span>Watch again</span></button>
+      <button class="cta ghost" id="b-free2" type="button"><span>Explore the galaxy<small>Free camera</small></span></button>
+    </div>
+    <a class="sc-back" href="index.html">← Part I · The Earth Migration Project</a>
+  </div>
+</div>
+
+<script src="js/boot.js"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three/build/three.module.js",
+  "three/addons/": "./vendor/three/examples/jsm/"
+} }
+</script>
+<script type="module" src="js/beyond/main.js"></script>
+</body>
+</html>

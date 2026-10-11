@@ -23,10 +23,10 @@ export function createShockwave(u) {
         float fres = pow(1.0 - abs(dot(N, V)), 2.2);
         float n = vn(vO * 7.0 + uP * 3.0) * 0.6 + vn(vO * 19.0 - uP * 5.0) * 0.4;
         // the condensation veil: thin, brightest at the silhouette, torn by turbulence, gone in a breath
-        float veil = fres * smoothstep(0.25, 0.75, n + 0.15) * smoothstep(0.0, 0.04, uP) * pow(1.0 - smoothstep(0.05, 0.55, uP), 1.5);
+        float veil = fres * (1.0 - smoothstep(0.55, 0.95, fres)) * smoothstep(0.25, 0.75, n + 0.15) * smoothstep(0.0, 0.04, uP) * pow(1.0 - smoothstep(0.05, 0.55, uP), 1.5);   // soft haze: no hard bubble outline at the silhouette
         // the dust ring hugging the ground, lasting longer
         float ring = (1.0 - smoothstep(0.0, 0.07 + 0.08 * n, vO.y)) * smoothstep(0.0, 0.03, uP) * pow(1.0 - uP, 1.2) * (0.5 + 0.8 * n);
-        float a = clamp(veil * 0.55 + ring * 0.42 * smoothstep(0.0, 0.6, n), 0.0, 1.0);
+        float a = clamp(veil * 0.4 + ring * 0.42 * smoothstep(0.0, 0.6, n), 0.0, 1.0);
         if (a < 0.003) discard;
         vec3 L = normalize(uSun);
         float day = smoothstep(-0.1, 0.15, dot(normalize(vW), L));

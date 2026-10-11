@@ -129,6 +129,7 @@ body.fp.touch #fp-touch { display: flex; }
 .cta { display: inline-flex; align-items: center; gap: 14px; padding: 16px 26px; background: var(--cyan); color: #02101c; border: 1px solid var(--cyan); font: 700 13px/1 var(--display); letter-spacing: .2em; text-transform: uppercase; cursor: pointer; text-align: left; box-shadow: 0 0 34px rgba(127,220,255,.45); transition: transform .2s, box-shadow .2s, border-color .2s; }
 .cta small { display: block; margin-top: 7px; font: 600 11px/1 var(--hud); letter-spacing: .12em; text-transform: none; opacity: .72; }
 .cta:hover { transform: translateY(-2px); box-shadow: 0 0 52px rgba(127,220,255,.7); }
+a.cta { text-decoration: none; }
 .cta.ghost { background: rgba(6,14,26,.6); color: var(--text); border-color: var(--cyan-line); box-shadow: none; }
 .cta.ghost:hover { border-color: var(--cyan); }
 .cta-ico { font-size: 18px; }

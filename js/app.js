@@ -1140,7 +1140,7 @@ function buildElevator() {
   }
   const core = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, CABLE_LEN, 4, 1, true), glow(0.4, 1.0, 2.0)); core.position.y = CABLE_LEN / 2 + 0.5; elevator.add(core);
   // light pulses running along the cable (GPU)
-  const n = 1600, aT = new Float32Array(n), aSp = new Float32Array(n), aSt = new Float32Array(n), pos = new Float32Array(n * 3);
+  const n = 700, aT = new Float32Array(n), aSp = new Float32Array(n), aSt = new Float32Array(n), pos = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) { aT[i] = rand(); aSp[i] = (rand() < 0.5 ? 1 : -1) * rr(0.006, 0.02); aSt[i] = (rand() * 3) | 0; }
   const bg = new THREE.BufferGeometry();
   bg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); bg.setAttribute('aT', new THREE.BufferAttribute(aT, 1));
@@ -1152,8 +1152,8 @@ function buildElevator() {
       void main(){ float t = fract(aT + uTime * aSp); float a = aSt * 2.0944;
         vec3 p = vec3(cos(a) * 0.24, 0.5 + t * uLen, sin(a) * 0.24);
         vec4 mv = modelViewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mv;
-        gl_PointSize = clamp(0.3 * uScale / -mv.z, 1.5, 24.0);
-        vA = smoothstep(0.0, 0.01, t) * (1.0 - smoothstep(0.98, 1.0, t)) * (1.0 - smoothstep(25.0, 90.0, -mv.z)); vUp = step(0.0, aSp);   // from orbit the tether is a thread, not a laser
+        gl_PointSize = clamp(0.22 * uScale / -mv.z, 1.0, 16.0);
+        vA = smoothstep(0.0, 0.01, t) * (1.0 - smoothstep(0.98, 1.0, t)) * (1.0 - smoothstep(12.0, 45.0, -mv.z)) * 0.7; vUp = step(0.0, aSp);   // from orbit the tether is a thread, not a laser
         if (vA < 0.001) gl_Position = vec4(0.0, 0.0, -2.0, 1.0); }`,
     fragmentShader: `varying float vA; varying float vUp; void main(){ float d = length(gl_PointCoord - 0.5); float a = (1.0 - smoothstep(0.0, 0.5, d));
       gl_FragColor = vec4(mix(vec3(2.6,1.6,0.8), vec3(0.6,1.6,3.0), vUp) * a * a * vA, 1.0); }`
@@ -1461,11 +1461,14 @@ const JUP_SIDE = new THREE.Vector3().crossVectors(JUP_DIR, new THREE.Vector3(0, 
 let jupiter, plume;
 function buildJupiter() {
   jupiter = new THREE.Group(); jupiter.visible = false; jupiter.rotation.z = 0.05; scene.add(jupiter);
+  // real cloud bands (Solar System Scope, CC BY 4.0) once loaded; the procedural bands stand in until then
+  const jMap = { value: null }, jHas = { value: 0 };
+  texLoader.load('assets/planets/jupiter_4k.jpg', t => { t.colorSpace = THREE.SRGBColorSpace; t.wrapS = THREE.RepeatWrapping; t.anisotropy = 8; jMap.value = t; jHas.value = 1; });
   jupiter.add(new THREE.Mesh(new THREE.SphereGeometry(JUP_R, 160, 120), new THREE.ShaderMaterial({
-    uniforms: { uSun, uTime, uLight },
-    vertexShader: `varying vec3 vP; varying vec3 vN; varying vec3 vW; void main(){ vP = normalize(position); vN = normalize(mat3(modelMatrix) * normal); vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+    uniforms: { uSun, uTime, uLight, uMap: jMap, uHas: jHas },
+    vertexShader: `varying vec3 vP; varying vec3 vN; varying vec3 vW; varying vec2 vUv; void main(){ vUv = uv; vP = normalize(position); vN = normalize(mat3(modelMatrix) * normal); vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
     fragmentShader: /* glsl */`
-      uniform vec3 uSun; uniform float uTime, uLight; varying vec3 vP; varying vec3 vN; varying vec3 vW;
+      uniform vec3 uSun; uniform float uTime, uLight, uHas; uniform sampler2D uMap; varying vec3 vP; varying vec3 vN; varying vec3 vW; varying vec2 vUv;
       ${GLSL_NOISE}
       void main(){
         float lat = vP.y, cl = sqrt(max(1.0 - lat * lat, 0.0));
@@ -1486,6 +1489,7 @@ function buildJupiter() {
         vec2 gs = vec2(atan(sin(gl), cos(gl)) * 2.2, (lat + 0.36) * 9.0);
         float grs = 1.0 - smoothstep(0.5, 1.0, length(gs));
         col = mix(col, vec3(0.75, 0.33, 0.2) * (0.85 + 0.3 * fbm(vec3(gs * 1.6, uTime * 0.03))), grs * 0.9);
+        if (uHas > 0.5) col = texture2D(uMap, vUv + vec2(uTime * 0.0006 * (0.6 + 0.8 * sin(lat * 17.0)), 0.0)).rgb * 1.05;   // zonal jets drift
         // a thick atmosphere: soft terminator, limb darkening, blue-white haze at the rim
         vec3 N = normalize(vN), L = normalize(uSun), V = normalize(cameraPosition - vW);
         float ndl = dot(N, L), mu = max(dot(N, V), 0.0);
@@ -1552,7 +1556,7 @@ const sanitizePass = new ShaderPass({
     float ok(float x){ return (x >= 0.0 && x < 60000.0) ? x : 0.0; }
     void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb; gl_FragColor = vec4(min(vec3(ok(c.r), ok(c.g), ok(c.b)), vec3(64.0)), 1.0); }`
 });
-const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.9, 0.35, 1.8);
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.6, 0.35, 2.2);
 // three's blur kernels use sigma == kernel radius (cut off at 1σ ≈ a box filter → square halos around tiny HDR
 // sources like the Sun). Re-weight them as proper Gaussians that fall off inside the kernel.
 [3, 5, 7, 9, 11].forEach((kr, i) => {
@@ -1585,14 +1589,14 @@ const lensPass = new ShaderPass({
       // heat shimmer: air around very hot plasma refracts and ripples
       float hm = 0.0;
       for (int k = 0; k < 4; k++) { float a = float(k) * 1.5708 + 0.785; vec3 s = texture2D(tDiffuse, vUv + vec2(cos(a) / uAspect, sin(a)) * 0.03).rgb; hm += max(dot(s, vec3(0.3, 0.55, 0.15)) - 2.0, 0.0); }
-      hm = min(hm * 0.25, 1.0) * uHeat;
+      hm = min(max(hm - 2.0, 0.0) * 0.06, 0.35) * uHeat;
       vec2 hoff = vec2(sin(vUv.y * 230.0 - uTime * 11.0 + sin(vUv.x * 70.0 + uTime * 3.0) * 2.0), cos(vUv.x * 190.0 + uTime * 8.0 + sin(vUv.y * 50.0) * 2.0)) * 0.0016 * hm;
       vec3 base = texture2D(tDiffuse, vUv + hoff).rgb;
       // lens dirt, lit by the brightest light around this point of the frame
       vec3 glowN = vec3(0.0);
       for (int k = 0; k < 8; k++) { float a = float(k) * 0.785398; glowN += texture2D(tDiffuse, clamp(vUv + vec2(cos(a), sin(a)) * vec2(0.11 / uAspect, 0.11), 0.0, 1.0)).rgb; }
       glowN = max(glowN / 8.0 - 0.6, 0.0);
-      base += texture2D(tDirt, vUv).r * min(glowN, vec3(2.0)) * 0.1;
+      base += texture2D(tDirt, vUv).r * min(glowN, vec3(2.0)) * 0.035;
       if (uVis < 0.002) { gl_FragColor = vec4(base, 1.0); return; }
       // screen-space light shafts from the bright sun only
       vec2 delta = (vUv - uSun) / float(RAYS) * 0.85; vec2 uv = vUv; float decay = 1.0, rays = 0.0;
@@ -1602,15 +1606,15 @@ const lensPass = new ShaderPass({
         float w = exp(-length((uv - uSun) * vec2(uAspect, 1.0)) * 4.0);
         rays += min(max(dot(s, vec3(0.3, 0.55, 0.15)) - 1.5, 0.0), 6.0) * w * decay; decay *= 0.94;
       }
-      vec3 add = vec3(1.0, 0.88, 0.72) * rays * 0.035;
+      vec3 add = vec3(1.0, 0.88, 0.72) * rays * 0.018;
       // optical artefacts — kept faint, like a real coated lens
       vec2 axis = vec2(0.5) - uSun;
       add += vec3(0.3, 0.55, 1.0) * disc(uSun + axis * 0.7, 0.02, 0.05) * 0.05;
       add += vec3(0.45, 0.3, 1.0) * disc(uSun + axis * 1.3, 0.05, 0.09) * 0.025;
       add += vec3(1.0, 0.6, 0.3) * ring(length((vUv - (uSun + axis * 1.75)) * vec2(uAspect, 1.0)), 0.11, 0.008) * 0.025;
       add += vec3(0.5, 0.75, 1.0) * ring(length((vUv - uSun) * vec2(uAspect, 1.0)), 0.38, 0.03) * 0.01;
-      add += vec3(0.35, 0.6, 1.4) * exp(-abs(vUv.y - uSun.y) * 520.0) * exp(-abs(vUv.x - uSun.x) * 5.0) * 0.28;   // anamorphic streak
-      add += texture2D(tDirt, vUv).r * vec3(1.0, 0.9, 0.75) * exp(-length((vUv - uSun) * vec2(uAspect, 1.0)) * 3.5) * 0.35;   // dirt catching the sun
+      add += vec3(0.35, 0.6, 1.4) * exp(-abs(vUv.y - uSun.y) * 650.0) * exp(-abs(vUv.x - uSun.x) * 6.0) * 0.09;   // anamorphic streak
+      add += texture2D(tDirt, vUv).r * vec3(1.0, 0.9, 0.75) * exp(-length((vUv - uSun) * vec2(uAspect, 1.0)) * 3.5) * 0.1;   // dirt catching the sun
       gl_FragColor = vec4(base + add * uVis, 1.0);
     }`
 });
@@ -2269,12 +2273,12 @@ const CHAPTERS = [
   { num: '01', title: 'The Dying Sun', year: '2061', dur: 8, sound: [0.45, 0.12, 0.45], spin: () => -1.55, spinRate: 0.012,
     state: (t, w) => {
       w.ignite = 0; w.steer = 0; w.exposure = 1.1; w.heroAge = 0;
-      if (t < 4.2) { w.sunScale = 6.4 + t * 0.45; w.sunBoost = 0.022 * (1 + 0.12 * Math.sin(t * 3)) * (1 + Math.max(0, t - 3.0) ** 2 * 45); }
+      if (t < 4.2) { w.sunScale = 6.4 + t * 0.45; w.sunBoost = 0.022 * (1 + 0.12 * Math.sin(t * 3)) * (1 + Math.max(0, t - 2.6) * 1.6); }   // a slow swell, never a white-out
       else { w.sunScale = 2.6; w.sunBoost = 1.2; w.atmoI = 55; }
     },
     shots: [
-      { dur: 4.2, fadeIn: 0.8, fadeOut: 0.45, outColor: '#fff', cam: u => { const pos = SUN_DIR.clone().multiplyScalar(R + 260); return { pos, target: pos.clone().addScaledVector(SUN_DIR, 1000).addScaledVector(Y, 6 * (1 - u)), fov: 13 - 3 * u }; } },
-      { dur: 3.8, fadeIn: 0.7, inColor: '#fff', cam: u => { const e = easeInOut(u), d = 600 - 110 * e, x = 122 * smooth(0.15, 1.0, u);
+      { dur: 4.2, fadeIn: 0.8, fadeOut: 0.6, cam: u => { const pos = SUN_DIR.clone().multiplyScalar(R + 260); return { pos, target: pos.clone().addScaledVector(SUN_DIR, 1000).addScaledVector(Y, 6 * (1 - u)), fov: 13 - 3 * u }; } },
+      { dur: 3.8, fadeIn: 0.7, cam: u => { const e = easeInOut(u), d = 600 - 110 * e, x = 122 * smooth(0.15, 1.0, u);
         return { pos: SUN_DIR.clone().multiplyScalar(-d).addScaledVector(PERP, x).addScaledVector(Y, 12), target: PERP.clone().multiplyScalar(x * 0.15), fov: 38 }; } },
     ],
     subs: [SUB(0.4, '2061. The Sun is dying.', 3.4), SUB(4.6, 'So we will take the Earth with us.', 3.3)] },
@@ -2326,7 +2330,7 @@ const CHAPTERS = [
           // look up the tether at lift-off → down at the curving Earth mid-climb → up at the station on arrival
           let p = 1.05 - 2.05 * smooth(0.03, 0.17, u); p += (0.9 - p) * smooth(0.66, 0.9, u);
           const fwd = toAxis.multiplyScalar(Math.cos(p)).addScaledVector(up, Math.sin(p));
-          return { pos, target: pos.clone().addScaledVector(fwd, 20), up, fov: 64 - 14 * u };
+          return { pos, target: pos.clone().addScaledVector(fwd, 20), up, fov: 50 - 8 * u };
         } },
     ],
     subs: [SUB(0.6, 'Space elevator · 36,000 km to geostationary orbit.', 4.2), SUB(5.2, 'One continuous climb, from the equator to the stars.', 3.6), SUB(9.3, 'Tianshu Apex Station.', 2.4)] },
@@ -2348,7 +2352,7 @@ const CHAPTERS = [
 
   { num: '06', title: 'The Long Night', year: 'YEAR 2500', dur: 9, sound: [0.35, 0.25, 0.95], spinRate: 0.01, titleAt: 5.0,
     spin: () => spinOf(heroDir, h => -h.dot(SUN_DIR.clone().multiplyScalar(-0.6).addScaledVector(PERP, 0.8).normalize())),
-    state: (t, w) => { w.freeze = 1; w.steer = 0; w.plume = 1; w.sunScale = 0.07; w.sunBoost = 2.2; w.light = 0.3; w.exposure = 1.5; w.star = 0.3 + 0.7 * smooth(0, 6, t); w.flareDir = MIGRATION_DIR; w.flare = 0.8; w.far = 20000; },
+    state: (t, w) => { w.freeze = 1; w.steer = 0; w.plume = 0.45; w.sunScale = 0.07; w.sunBoost = 2.2; w.light = 0.3; w.exposure = 1.1; w.star = 0.3 + 0.7 * smooth(0, 6, t); w.flareDir = MIGRATION_DIR; w.flare = 0.8; w.far = 20000; },
     shots: [
       { dur: 4, fadeIn: 0.5, fadeOut: 0.3, cam: u => { const g = SUN_DIR.clone().multiplyScalar(-0.6).addScaledVector(PERP, 0.8), a = Math.atan2(g.x, g.z) + 0.12 * u;
         return { pos: V(Math.sin(a) * 300, 85 - 10 * u, Math.cos(a) * 300), target: V(0, -8, 0), fov: 42 }; } },

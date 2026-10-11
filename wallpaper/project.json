@@ -1,0 +1,318 @@
+{
+	"contentrating": "Everyone",
+	"description": "Beyond the Wandering Earth — a real-time cinematic journey from Earth's planetary engines to the Milky Way.\n\nLANDING: the Earth and its burning planetary engines; the camera glides between three designed views as you move the mouse (or pin one in the panel), and drifts slowly when you rest.\nINSPECT: orbit the engines, the space elevator, the ring station, the flagship, the Moon, Saturn or the Sun — drag to orbit, wheel to zoom.\nCINEMATIC: the full three-minute film — it plays only when you press Play in the on-screen panel. One-shot or seamless loop.\nFLIGHT: a guided flight past the engines, the elevator, the ring and the fleet — the cursor sets speed and direction.\n\nOn-screen control panel at the top edge — collapsed to a small icon until you click it, closes on click-outside or after a few seconds, desktop clock and telemetry, engines that react to your music, four quality tiers switched live, a frame-rate cap and an idle power saver. Rendering stops while the wallpaper is hidden or paused.\n\nFan work inspired by The Wandering Earth. NASA textures and models are public domain; planet maps CC BY 4.0 Solar System Scope; fonts SIL OFL.",
+	"file": "index.html",
+	"general": {
+		"supportsaudioprocessing": true,
+		"properties": {
+			"schemecolor": {
+				"order": 0,
+				"text": "ui_browse_properties_scheme_color",
+				"type": "color",
+				"value": "0.62353 0.84706 1"
+			},
+			"defaultmode": {
+				"text": "Default mode",
+				"type": "combo",
+				"value": "landing",
+				"options": [
+					{
+						"label": "Landing — Earth & engines, views follow the mouse",
+						"value": "landing"
+					},
+					{
+						"label": "Inspect — orbit a hero asset",
+						"value": "inspect"
+					},
+					{
+						"label": "Cinematic — the film (press Play in the panel)",
+						"value": "cinematic"
+					},
+					{
+						"label": "Flight — guided flight, the mouse sets speed",
+						"value": "flight"
+					}
+				],
+				"order": 1
+			},
+			"autoplay": {
+				"text": "Play the film automatically",
+				"type": "bool",
+				"value": false,
+				"condition": "defaultmode.value == 'cinematic'",
+				"order": 2
+			},
+			"loopfilm": {
+				"text": "Loop the film (off = one-shot, then back to the landing)",
+				"type": "bool",
+				"value": false,
+				"order": 3
+			},
+			"sensitivity": {
+				"text": "Interaction sensitivity (%)",
+				"type": "slider",
+				"min": 0,
+				"max": 200,
+				"value": 100,
+				"order": 4
+			},
+			"panel": {
+				"text": "On-screen control panel",
+				"type": "bool",
+				"value": true,
+				"order": 5
+			},
+			"startexpanded": {
+				"text": "Open the control panel (start expanded)",
+				"type": "bool",
+				"value": false,
+				"condition": "panel.value == true",
+				"order": 6
+			},
+			"autocollapse": {
+				"text": "Panel auto-collapse after (s, 0 = never)",
+				"type": "slider",
+				"min": 0,
+				"max": 60,
+				"value": 5,
+				"condition": "panel.value == true",
+				"order": 7
+			},
+			"panelposition": {
+				"text": "Panel position",
+				"type": "combo",
+				"value": "tr",
+				"condition": "panel.value == true",
+				"options": [
+					{
+						"label": "Top right",
+						"value": "tr"
+					},
+					{
+						"label": "Top centre",
+						"value": "tc"
+					},
+					{
+						"label": "Top left",
+						"value": "tl"
+					}
+				],
+				"order": 8
+			},
+			"paneltop": {
+				"text": "Panel extra top offset (px, e.g. a top taskbar)",
+				"type": "slider",
+				"min": 0,
+				"max": 160,
+				"value": 0,
+				"condition": "panel.value == true",
+				"order": 9
+			},
+			"idletimeout": {
+				"text": "Landing: back to the hero view after (s)",
+				"type": "slider",
+				"min": 3,
+				"max": 60,
+				"value": 8,
+				"order": 10
+			},
+			"modereturn": {
+				"text": "Inspect / flight: back to the landing after (s, 0 = never)",
+				"type": "slider",
+				"min": 0,
+				"max": 600,
+				"value": 90,
+				"order": 11
+			},
+			"filmafter": {
+				"text": "Auto-play the film after resting (min, 0 = never)",
+				"type": "slider",
+				"min": 0,
+				"max": 30,
+				"value": 0,
+				"order": 12
+			},
+			"orbitspeed": {
+				"order": 13,
+				"text": "Inspect: auto-rotate speed",
+				"type": "slider",
+				"min": 0,
+				"max": 100,
+				"value": 30
+			},
+			"audioreactive": {
+				"order": 14,
+				"text": "Engines react to audio",
+				"type": "bool",
+				"value": true
+			},
+			"audiostrength": {
+				"order": 15,
+				"text": "Audio response",
+				"type": "slider",
+				"min": 0,
+				"max": 100,
+				"value": 50,
+				"condition": "audioreactive.value == true"
+			},
+			"music": {
+				"order": 16,
+				"text": "Generative soundtrack",
+				"type": "bool",
+				"value": false
+			},
+			"volume": {
+				"order": 17,
+				"text": "Soundtrack volume",
+				"type": "slider",
+				"min": 0,
+				"max": 100,
+				"value": 60,
+				"condition": "music.value == true"
+			},
+			"captions": {
+				"order": 18,
+				"text": "Film captions",
+				"type": "bool",
+				"value": true
+			},
+			"chaptercards": {
+				"order": 19,
+				"text": "Titles and countdown",
+				"type": "bool",
+				"value": true
+			},
+			"letterbox": {
+				"order": 20,
+				"text": "Cinema letterbox",
+				"type": "bool",
+				"value": false
+			},
+			"clock": {
+				"order": 21,
+				"text": "Clock",
+				"type": "bool",
+				"value": true
+			},
+			"clock24": {
+				"order": 22,
+				"text": "24-hour clock",
+				"type": "bool",
+				"value": true,
+				"condition": "clock.value == true"
+			},
+			"clockposition": {
+				"order": 23,
+				"text": "Clock position",
+				"type": "combo",
+				"value": "bl",
+				"options": [
+					{
+						"label": "Bottom left",
+						"value": "bl"
+					},
+					{
+						"label": "Top left",
+						"value": "tl"
+					},
+					{
+						"label": "Top right",
+						"value": "tr"
+					},
+					{
+						"label": "Bottom right",
+						"value": "br"
+					}
+				]
+			},
+			"telemetry": {
+				"order": 24,
+				"text": "Navigation telemetry",
+				"type": "bool",
+				"value": true
+			},
+			"brightness": {
+				"order": 25,
+				"text": "Brightness",
+				"type": "slider",
+				"min": 60,
+				"max": 150,
+				"value": 100
+			},
+			"quality": {
+				"text": "Quality",
+				"type": "combo",
+				"value": "medium",
+				"options": [
+					{
+						"label": "Low — integrated graphics, laptops",
+						"value": "low"
+					},
+					{
+						"label": "Medium — recommended",
+						"value": "medium"
+					},
+					{
+						"label": "High",
+						"value": "high"
+					},
+					{
+						"label": "Ultra",
+						"value": "ultra"
+					}
+				],
+				"order": 26
+			},
+			"fpscap": {
+				"text": "Frame-rate cap",
+				"type": "combo",
+				"value": "0",
+				"options": [
+					{
+						"label": "Auto (tier: 30 on Low/Medium, 60 on High/Ultra)",
+						"value": "0"
+					},
+					{
+						"label": "24 fps",
+						"value": "24"
+					},
+					{
+						"label": "30 fps",
+						"value": "30"
+					},
+					{
+						"label": "45 fps",
+						"value": "45"
+					},
+					{
+						"label": "60 fps",
+						"value": "60"
+					}
+				],
+				"order": 27
+			},
+			"idlepowersave": {
+				"text": "Power saver: 30 fps while the mouse rests",
+				"type": "bool",
+				"value": true,
+				"order": 28
+			},
+			"renderscale": {
+				"order": 29,
+				"text": "Render scale (%)",
+				"type": "slider",
+				"min": 50,
+				"max": 100,
+				"value": 100
+			}
+		}
+	},
+	"preview": "preview.jpg",
+	"tags": [
+		"Sci-Fi",
+		"CGI"
+	],
+	"title": "Beyond the Wandering Earth — Cinematic Space Journey",
+	"type": "web",
+	"visibility": "public"
+}

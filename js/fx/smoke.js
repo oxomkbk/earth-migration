@@ -47,7 +47,7 @@ export function createSmoke(emitters, u, opt = {}) {
     uniforms: {
       uTime: u.uTime, uIgnite: u.uIgnite, uHero: u.uHero, uSun: u.uSun, uLight: u.uLight,
       uPower: u.uPower || { value: 1 }, uOpacity: u.uOpacity || { value: 1 },
-      uGlow: { value: (opt.glow || new THREE.Color(0.35, 0.62, 1.0)) }, uSpeed: { value: opt.speed || 0.05 }, uAge: u.uAge || { value: 1e4 },
+      uGlow: { value: (opt.glow || new THREE.Color(0.38, 0.6, 1.0)) }, uSpeed: { value: opt.speed || 0.05 }, uAge: u.uAge || { value: 1e4 },
     },
     transparent: true, depthWrite: false, premultipliedAlpha: true, blending: THREE.NormalBlending,
     vertexShader: /* glsl */`
